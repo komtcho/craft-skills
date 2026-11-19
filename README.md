@@ -43,7 +43,7 @@ Fetches the skill folder from GitHub, works out its name and the agents to insta
 it for, writes it to every target folder, and records it in `craft-skills.json`.
 
 | option | meaning |
-|---|---|
+| --- | --- |
 | `-s, --skill <name>` | Install under this name instead of the derived one |
 | `-a, --agent <agents>` | `agent`, `claude`, `cursor`, `codex`, `windsurf`. Comma-separated and/or repeated: `-a claude,cursor -a codex` |
 | `-r, --ref <ref>` | Branch, tag or commit. Overrides any `@ref` in the source |
@@ -61,7 +61,7 @@ craft-skills add owner/repo --ref release/2.0 --force
 
 ### `list`
 
-```
+```text
 $ craft-skills list
 pdf-tools
   source     owner/repo/skills/pdf
@@ -92,7 +92,7 @@ lists the installed skills.
 ## Source formats
 
 | form | example |
-|---|---|
+| --- | --- |
 | `owner/repo` | `acme/skills` (the repository root is the skill) |
 | `owner/repo/path` | `acme/skills/skills/pdf` |
 | `owner/repo/path@ref` | `acme/skills/skills/pdf@v1.2.0` |
@@ -129,7 +129,7 @@ Valid names match `^[A-Za-z0-9][A-Za-z0-9._-]*$`. Derived names are slugified:
 ## Agents
 
 | agent | skills are installed to |
-|---|---|
+| --- | --- |
 | `agent` | `.agent/skills/<name>/` |
 | `claude` | `.claude/skills/<name>/` |
 | `cursor` | `.cursor/skills/<name>/` |
@@ -190,7 +190,7 @@ The token is sent as a `Bearer` token to `api.github.com` and
 `raw.githubusercontent.com` only. Errors come with a hint:
 
 | status | message |
-|---|---|
+| --- | --- |
 | 404 | not found (if the repository is private, set a token) |
 | 403 / 429 | rate limit exceeded, with the reset time |
 | 401 | the token was rejected |
