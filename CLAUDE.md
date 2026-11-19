@@ -181,14 +181,20 @@ invalid `--skill`.
 
 ```
 src/
-  index.ts
-  types.ts                 # shared types + CraftError
+  index.ts                 # shebang + `process.exitCode = await main(argv)` only
+  cli.ts                   # commander program, help, error handler; exports main()
+  types.ts                 # shared types + CraftError + CommandContext
   core/{agents,lockfile,github,skill,ui}.ts
   commands/{add,install,list,remove}.ts
 test/
+  helpers/{fs,github-mock}.ts   # temp dirs, output capture, in-memory GitHub
+  *.test.ts
 ```
 
 Commands orchestrate; logic lives in `core/`. Small, typed, pure where possible.
+`cli.ts` exists (beyond the original structure) so the CLI is testable in-process
+via `main()` with a mocked `fetch`. All output goes through `core/ui.ts` so tests
+can capture it with `setOutput`.
 
 ## 4. Development plan
 
@@ -196,15 +202,15 @@ One phase at a time, approval between phases.
 
 | # | Phase | Scope | Done when | Status |
 |---|---|---|---|---|
-| 1 | Scaffold | `CLAUDE.md`, `package.json`, `tsconfig.json`, `.gitignore`, `types.ts`, `core/ui.ts`, test runner | `npm run typecheck` passes | in progress |
-| 2 | Agents + manifest | `core/agents.ts`, `core/lockfile.ts` + tests | parse/detect/resolve agents, target safety, manifest read/validate/write tested | — |
-| 3 | GitHub + skill | `core/github.ts`, `core/skill.ts` + tests (mocked fetch) | all source forms parsed; error mapping; name resolution + atomic write tested | — |
-| 4 | add + list | `commands/add.ts`, `commands/list.ts`, minimal `index.ts` | `add` then `list` works end-to-end against the mock | — |
-| 5 | install + remove | `commands/install.ts`, `commands/remove.ts` | locked-commit install, `--update`, partial failures, remove tested | — |
-| 6 | CLI polish | final `index.ts`, help, error handler, `--version`, both bins | `node dist/index.js --help` clean; every error path prints message + hint | — |
-| 7 | E2E tests | add → list → install → install --update → remove; hostile manifest; 404; rate limit; missing manifest | `npm test` green | — |
-| 8 | Docs | `README.md` (install, usage, sources, agent resolution, manifest, `GITHUB_TOKEN`, commit lock, safety, roadmap) | README examples match real behavior | — |
-| 9 | CI + release prep | `ci.yml` (Node 20 & 22), `release.yml` (`v*` tag → `npm publish --provenance --access public`, Trusted Publishing, `id-token: write`), `CHANGELOG.md`, version `0.1.0` | valid YAML; `npm pack --dry-run` shows only `dist`, README, LICENSE, package.json | — |
+| 1 | Scaffold | `CLAUDE.md`, `package.json`, `tsconfig.json`, `.gitignore`, `types.ts`, `core/ui.ts`, test runner | `npm run typecheck` passes | done |
+| 2 | Agents + manifest | `core/agents.ts`, `core/lockfile.ts` + tests | parse/detect/resolve agents, target safety, manifest read/validate/write tested | done |
+| 3 | GitHub + skill | `core/github.ts`, `core/skill.ts` + tests (mocked fetch) | all source forms parsed; error mapping; name resolution + atomic write tested | done |
+| 4 | add + list | `commands/add.ts`, `commands/list.ts`, minimal `index.ts` | `add` then `list` works end-to-end against the mock | done |
+| 5 | install + remove | `commands/install.ts`, `commands/remove.ts` | locked-commit install, `--update`, partial failures, remove tested | done |
+| 6 | CLI polish | final `index.ts`, help, error handler, `--version`, both bins | `node dist/index.js --help` clean; every error path prints message + hint | done |
+| 7 | E2E tests | add → list → install → install --update → remove; hostile manifest; 404; rate limit; missing manifest | `npm test` green | done |
+| 8 | Docs | `README.md` (install, usage, sources, agent resolution, manifest, `GITHUB_TOKEN`, commit lock, safety, roadmap) | README examples match real behavior | done |
+| 9 | CI + release prep | `ci.yml` (Node 20 & 22), `release.yml` (`v*` tag → `npm publish --provenance --access public`, Trusted Publishing, `id-token: write`), `CHANGELOG.md`, version `0.1.0` | valid YAML; `npm pack --dry-run` shows only `dist`, README, LICENSE, package.json | done |
 
 After phase 9, STOP. The user creates the tag and publishes.
 
