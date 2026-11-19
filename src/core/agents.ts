@@ -1,18 +1,42 @@
 import { lstat, realpath, stat } from "node:fs/promises";
 import path from "node:path";
-import { CraftError, type AgentId } from "../types.js";
+import { CraftError } from "../types.js";
 import * as ui from "./ui.js";
 
-/** The single source of truth for agent → root folder. Skills go in `<dir>/skills/<name>`. */
-export const AGENT_DIRS = {
-  agent: ".agent",
-  claude: ".claude",
-  cursor: ".cursor",
-  codex: ".codex",
-  windsurf: ".windsurf",
-} as const satisfies Record<AgentId, string>;
+interface AgentSpec {
+  /** Root folder; skills go in `<dir>/skills/<name>`. */
+  readonly dir: string;
+  /**
+   * Project-relative paths whose presence means the agent is in use. Defaults to `[dir]`.
+   * Needed when `dir` is shared with unrelated tooling (e.g. `.github`).
+   */
+  readonly detect?: readonly string[];
+}
 
-export const AGENT_IDS = Object.keys(AGENT_DIRS) as AgentId[];
+/** The single source of truth for agents: id → root folder (+ how to detect it). */
+export const AGENTS = {
+  agent: { dir: ".agent" },
+  claude: { dir: ".claude" },
+  cursor: { dir: ".cursor" },
+  codex: { dir: ".codex" },
+  windsurf: { dir: ".windsurf" },
+} as const satisfies Record<string, AgentSpec>;
+
+/** Supported agent identifiers, derived from `AGENTS`. */
+export type AgentId = keyof typeof AGENTS;
+
+export const AGENT_IDS = Object.keys(AGENTS) as AgentId[];
+
+/** Root folder of an agent, e.g. `.claude`. */
+export function agentDir(agent: AgentId): string {
+  return AGENTS[agent].dir;
+}
+
+/** Paths that mark an agent as present (by default its root folder). */
+export function agentMarkers(agent: AgentId): readonly string[] {
+  const spec: AgentSpec = AGENTS[agent];
+  return spec.detect ?? [spec.dir];
+}
 
 /** Used when nothing else decides. */
 export const FALLBACK_AGENT: AgentId = "agent";
@@ -23,7 +47,7 @@ const MAX_NAME_LENGTH = 100;
 
 const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const TARGET_RE = new RegExp(
-  `^(?:${Object.values(AGENT_DIRS).map(escapeRe).join("|")})/skills/(${NAME_PATTERN})$`,
+  `^(?:${Object.values(AGENTS).map((a) => escapeRe(a.dir)).join("|")})/skills/(${NAME_PATTERN})$`,
 );
 
 export function isValidSkillName(name: string): boolean {
@@ -31,12 +55,12 @@ export function isValidSkillName(name: string): boolean {
 }
 
 export function isAgentId(value: string): value is AgentId {
-  return Object.hasOwn(AGENT_DIRS, value);
+  return Object.hasOwn(AGENTS, value);
 }
 
 /** Project-relative, POSIX-style target directory for an agent + skill name. */
 export function agentTarget(agent: AgentId, name: string): string {
-  return `${AGENT_DIRS[agent]}/skills/${name}`;
+  return `${agentDir(agent)}/skills/${name}`;
 }
 
 /**
@@ -71,14 +95,24 @@ export function parseAgents(values: readonly string[]): AgentId[] {
   return agents;
 }
 
-/** Agents whose root folder (e.g. `.claude/`) exists in `cwd`, in mapping order. */
+async function exists(p: string): Promise<boolean> {
+  try {
+    await stat(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Agents with any marker (by default their root folder, e.g. `.claude/`) in `cwd`, in mapping order. */
 export async function detectAgents(cwd: string): Promise<AgentId[]> {
   const found: AgentId[] = [];
   for (const id of AGENT_IDS) {
-    try {
-      if ((await stat(path.join(cwd, AGENT_DIRS[id]))).isDirectory()) found.push(id);
-    } catch {
-      // not present
+    for (const marker of agentMarkers(id)) {
+      if (await exists(path.join(cwd, ...marker.split("/")))) {
+        found.push(id);
+        break;
+      }
     }
   }
   return found;
@@ -115,7 +149,7 @@ export async function resolveAgents(opts: ResolveAgentsOptions): Promise<Resolve
   const interactive = opts.interactive ?? ui.isInteractive();
   if (!interactive) {
     ui.warn(
-      `Found several agent folders (${detected.map((a) => AGENT_DIRS[a]).join(", ")}); ` +
+      `Found several agent folders (${detected.map(agentDir).join(", ")}); ` +
         `installing for all of them. Use --agent to choose.`,
     );
     return { agents: detected, source: "detected" };
@@ -131,7 +165,7 @@ export async function resolveAgents(opts: ResolveAgentsOptions): Promise<Resolve
 function defaultPrompt(detected: AgentId[]): Promise<AgentId[] | null> {
   return ui.multiselect<AgentId>({
     message: "Install the skill for which agents?",
-    options: detected.map((id) => ({ value: id, label: `${id} (${AGENT_DIRS[id]}/skills)` })),
+    options: detected.map((id) => ({ value: id, label: `${id} (${agentDir(id)}/skills)` })),
     initialValues: detected,
     fallback: detected,
   });

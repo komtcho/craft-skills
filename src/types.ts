@@ -1,5 +1,7 @@
-/** Supported agent identifiers. The path mapping lives in `core/agents.ts`. */
-export type AgentId = "agent" | "claude" | "cursor" | "codex" | "windsurf";
+import type { AgentId } from "./core/agents.js";
+
+/** Supported agent identifiers, derived from the mapping in `core/agents.ts`. */
+export type { AgentId };
 
 /** One installed skill, as recorded in `craft-skills.json`. */
 export interface SkillEntry {

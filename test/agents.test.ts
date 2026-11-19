@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdir, symlink } from "node:fs/promises";
 import path from "node:path";
 import {
-  AGENT_DIRS,
+  AGENTS,
   agentTarget,
   assertSafeTarget,
   detectAgents,
@@ -37,7 +37,7 @@ describe("names and targets", () => {
   test("agentTarget uses the single mapping", () => {
     assert.equal(agentTarget("claude", "pdf"), ".claude/skills/pdf");
     assert.equal(agentTarget("agent", "pdf"), ".agent/skills/pdf");
-    assert.equal(Object.keys(AGENT_DIRS).length, 5);
+    assert.equal(Object.keys(AGENTS).length, 5);
   });
 
   test("isValidSkillName", () => {
