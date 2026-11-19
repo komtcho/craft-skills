@@ -4,6 +4,7 @@ import { CraftError } from "./types.js";
 import { addCommand } from "./commands/add.js";
 import { installCommand } from "./commands/install.js";
 import { listCommand } from "./commands/list.js";
+import { removeCommand } from "./commands/remove.js";
 import * as ui from "./core/ui.js";
 
 /** Finds this package's version by walking up from the compiled file. */
@@ -63,6 +64,15 @@ export function createProgram(cwd: string): Command {
     .option("-u, --update", "re-resolve each ref and record the new commit")
     .action(async (opts: { update?: boolean }) => {
       await installCommand(opts, ctx);
+    });
+
+  program
+    .command("remove")
+    .alias("rm")
+    .description("Delete a skill's folders and its manifest entry")
+    .argument("<name>", "installed skill name (see `craft-skills list`)")
+    .action(async (name: string) => {
+      await removeCommand(name, ctx);
     });
 
   return program;
