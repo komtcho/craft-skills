@@ -39,6 +39,12 @@ export interface SkillFile {
   content: Uint8Array;
 }
 
+/** What every command needs from the outside world. */
+export interface CommandContext {
+  /** Project root: where `craft-skills.json` and the agent folders live. */
+  cwd: string;
+}
+
 /** A user-facing error: printed as message + optional hint, exit code 1. */
 export class CraftError extends Error {
   readonly hint: string | undefined;
