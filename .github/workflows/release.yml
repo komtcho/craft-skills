@@ -1,0 +1,42 @@
+name: Release
+
+# Publishes to npm when a v* tag is pushed, using npm Trusted Publishing (OIDC).
+# One-time setup on npmjs.com: package settings → Trusted Publisher →
+# GitHub Actions, repository komtcho/craft-skills, workflow file release.yml.
+# No NPM_TOKEN secret is needed.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write # required for Trusted Publishing and provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted Publishing needs npm >= 11.5.1; Node 22 ships npm 10.
+      - run: npm install -g npm@^11.5.1
+
+      - name: Check that the tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${version}" >&2
+            exit 1
+          fi
+
+      - run: npm ci
+
+      # prepublishOnly runs typecheck + test + build.
+      - run: npm publish --provenance --access public
