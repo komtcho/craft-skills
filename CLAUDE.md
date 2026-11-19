@@ -69,13 +69,23 @@ decision. Follow it in every session.
 | `cursor`   | `.cursor/skills/<name>/`     |
 | `codex`    | `.codex/skills/<name>/`      |
 | `windsurf` | `.windsurf/skills/<name>/`   |
+| `agents`   | `.agents/skills/<name>/`     |
+| `copilot`  | `.github/skills/<name>/`     |
+| `gemini`   | `.gemini/skills/<name>/`     |
+| `opencode` | `.opencode/skills/<name>/`   |
+| `roo`      | `.roo/skills/<name>/`        |
+| `kiro`     | `.kiro/skills/<name>/`       |
 
-The mapping lives in ONE constant in `core/agents.ts`.
+The mapping lives in ONE constant (`AGENTS`) in `core/agents.ts`; `AgentId` is
+derived from it. Each entry has a root `dir` and optional `detect` markers
+(default `[dir]`). Copilot uses markers (`.github/skills`,
+`.github/copilot-instructions.md`) because `.github` alone is ubiquitous.
+Paths were checked against each tool's docs on 2026-11-20.
 
 **Agent resolution order:**
 1. `-a, --agent <agents>` — comma-separated and/or repeatable; validated.
 2. `defaultAgents` in the manifest.
-3. Detect root folders (`.agent`, `.claude`, …) in cwd:
+3. Detect agent markers (root folders `.agent`, `.claude`, …) in cwd:
    - 1 found → use it.
    - several → clack multiselect (all preselected); non-interactive → all
      detected + a warning suggesting `--agent`.
@@ -221,3 +231,5 @@ After phase 9, STOP. The user creates the tag and publishes.
 - Optional `.gitignore` management for skill folders (`--gitignore`).
 - Configurable agent paths (verify real Cursor / Codex / Windsurf skill locations).
 - Other sources (GitLab, local paths).
+
+

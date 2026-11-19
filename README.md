@@ -1,7 +1,8 @@
 # craft-skills
 
 Install AI agent skills from GitHub into your project, for Claude, Cursor, Codex,
-Windsurf or a generic `.agent/` folder. Each skill is locked to an exact commit.
+Windsurf, GitHub Copilot, Gemini CLI, OpenCode, Roo Code, Kiro, the shared
+`.agents/` folder or a generic `.agent/` folder. Each skill is locked to an exact commit.
 
 ```sh
 npx craft-skills add owner/repo/skills/pdf
@@ -10,7 +11,7 @@ npx craft-skills add owner/repo/skills/pdf
 - **No config needed.** It detects which agent folders your project already has.
 - **Reproducible.** `craft-skills.json` records the exact commit of every skill;
   `craft-skills install` restores those commits.
-- **Safe.** It only ever writes or deletes inside `.<agent>/skills/<name>/` in your project.
+- **Safe.** It only ever writes or deletes inside `<agent folder>/skills/<name>/` in your project.
 - **Small.** Two runtime dependencies (`commander`, `@clack/prompts`); uses the native `fetch`.
 
 ## Install
@@ -45,7 +46,7 @@ it for, writes it to every target folder, and records it in `craft-skills.json`.
 | option | meaning |
 | --- | --- |
 | `-s, --skill <name>` | Install under this name instead of the derived one |
-| `-a, --agent <agents>` | `agent`, `claude`, `cursor`, `codex`, `windsurf`. Comma-separated and/or repeated: `-a claude,cursor -a codex` |
+| `-a, --agent <agents>` | Any id from [Agents](#agents), e.g. `claude`, `copilot`, `agents`. Comma-separated and/or repeated: `-a claude,cursor -a codex` |
 | `-r, --ref <ref>` | Branch, tag or commit. Overrides any `@ref` in the source |
 | `-f, --force` | Reinstall a skill that is already installed, or overwrite an existing folder. Folders the skill no longer targets are removed |
 
@@ -128,19 +129,30 @@ Valid names match `^[A-Za-z0-9][A-Za-z0-9._-]*$`. Derived names are slugified:
 
 ## Agents
 
-| agent | skills are installed to |
-| --- | --- |
-| `agent` | `.agent/skills/<name>/` |
-| `claude` | `.claude/skills/<name>/` |
-| `cursor` | `.cursor/skills/<name>/` |
-| `codex` | `.codex/skills/<name>/` |
-| `windsurf` | `.windsurf/skills/<name>/` |
+| agent | tool | skills are installed to |
+| --- | --- | --- |
+| `agent` | generic | `.agent/skills/<name>/` |
+| `claude` | Claude Code | `.claude/skills/<name>/` |
+| `cursor` | Cursor | `.cursor/skills/<name>/` |
+| `codex` | OpenAI Codex | `.codex/skills/<name>/` |
+| `windsurf` | Windsurf | `.windsurf/skills/<name>/` |
+| `agents` | shared folder (Codex, Amp, Gemini CLI, Cursor, OpenCode, Copilot) | `.agents/skills/<name>/` |
+| `copilot` | GitHub Copilot | `.github/skills/<name>/` |
+| `gemini` | Gemini CLI | `.gemini/skills/<name>/` |
+| `opencode` | OpenCode | `.opencode/skills/<name>/` |
+| `roo` | Roo Code | `.roo/skills/<name>/` |
+| `kiro` | Kiro | `.kiro/skills/<name>/` |
+
+Several tools also read `.agents/skills/` and `.claude/skills/`, so one of those
+folders often covers more than one tool. Check your tool's documentation.
 
 The agents for an `add` are chosen in this order:
 
 1. `--agent`
 2. `defaultAgents` in `craft-skills.json`
-3. The agent folders that already exist in the project (`.claude/`, `.cursor/`, …):
+3. The agent folders that already exist in the project (`.claude/`, `.cursor/`, …).
+   Copilot is detected only by `.github/skills/` or `.github/copilot-instructions.md`,
+   because most repositories have a `.github/` folder anyway:
    - one found: that agent
    - several found: you choose in a prompt, with all of them preselected. In CI or
      without a terminal, all of them are used and a warning suggests `--agent`.
@@ -199,7 +211,8 @@ The token is sent as a `Bearer` token to `api.github.com` and
 ## Safety
 
 - Every target, whether from the manifest or computed, must match
-  `.<agent>/skills/<name>` and resolve inside the project. An agent folder that is a
+  `<agent folder>/skills/<name>` (for example `.claude/skills/pdf` or
+  `.github/skills/pdf`) and resolve inside the project. An agent folder that is a
   symlink pointing outside the project is refused. A tampered `craft-skills.json`
   cannot make the tool write or delete anything else.
 - Files with unsafe paths (`..`, absolute paths) are never written.
@@ -221,8 +234,7 @@ Not in v0.1.0:
   from a list or use `--all`
 - `craft-skills update [name]` and `craft-skills outdated`
 - Optional `.gitignore` management for skill folders (`--gitignore`)
-- Configurable agent paths (and checking the real Cursor / Codex / Windsurf skill
-  locations)
+- Configurable agent paths
 - Other sources: GitLab and local paths
 
 ## Development

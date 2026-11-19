@@ -1,8 +1,20 @@
+<!-- markdownlint-configure-file { "MD024": { "siblings_only": true } } -->
+
 # Changelog
 
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+
+- New agents: `agents` (`.agents/skills`, the folder shared by Codex, Amp, Gemini CLI,
+  Cursor, OpenCode and Copilot), `copilot` (`.github/skills`), `gemini` (`.gemini/skills`),
+  `opencode` (`.opencode/skills`), `roo` (`.roo/skills`) and `kiro` (`.kiro/skills`).
+- Copilot is detected only by `.github/skills/` or `.github/copilot-instructions.md`, not by
+  a bare `.github/` folder.
 
 ## [0.1.0] - 2026-11-19
 
