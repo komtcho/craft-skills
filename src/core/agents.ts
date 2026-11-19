@@ -20,6 +20,14 @@ export const AGENTS = {
   cursor: { dir: ".cursor" },
   codex: { dir: ".codex" },
   windsurf: { dir: ".windsurf" },
+  // Cross-agent folder read by Codex, Amp, Gemini CLI, Cursor, OpenCode and Copilot.
+  agents: { dir: ".agents" },
+  // `.github` exists in most repos, so only Copilot-specific files count as detection.
+  copilot: { dir: ".github", detect: [".github/skills", ".github/copilot-instructions.md"] },
+  gemini: { dir: ".gemini" },
+  opencode: { dir: ".opencode" },
+  roo: { dir: ".roo" },
+  kiro: { dir: ".kiro" },
 } as const satisfies Record<string, AgentSpec>;
 
 /** Supported agent identifiers, derived from `AGENTS`. */

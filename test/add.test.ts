@@ -71,6 +71,16 @@ describe("add", () => {
     await assert.rejects(addCommand("owner/repo/skills/pdf", { agent: ["vim"] }, { cwd: dir }), /Unknown agent/);
   });
 
+  test("add for copilot writes into .github/skills and leaves .github otherwise alone", async () => {
+    await mkdir(path.join(dir, ".github", "workflows"), { recursive: true });
+    const { entry } = await addCommand("owner/repo/skills/pdf", { skill: "pdf", agent: ["copilot,gemini"] }, { cwd: dir });
+    assert.deepEqual(entry.targets, [".github/skills/pdf", ".gemini/skills/pdf"]);
+    assert.ok(await exists(path.join(dir, ".github/skills/pdf/SKILL.md")));
+    assert.ok(await exists(path.join(dir, ".gemini/skills/pdf/SKILL.md")));
+    assert.deepEqual(await readdir(path.join(dir, ".github")), ["skills", "workflows"]);
+    assert.deepEqual((await readManifest(dir))?.defaultAgents, ["copilot", "gemini"]);
+  });
+
   test("invalid --skill is rejected before any network call", async () => {
     await assert.rejects(addCommand("owner/repo", { skill: "../x" }, { cwd: dir }), /Invalid skill name/);
     assert.equal(gh.requests.length, 0);

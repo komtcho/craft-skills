@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, symlink } from "node:fs/promises";
+import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
   AGENTS,
@@ -37,7 +37,25 @@ describe("names and targets", () => {
   test("agentTarget uses the single mapping", () => {
     assert.equal(agentTarget("claude", "pdf"), ".claude/skills/pdf");
     assert.equal(agentTarget("agent", "pdf"), ".agent/skills/pdf");
-    assert.equal(Object.keys(AGENTS).length, 5);
+    assert.equal(Object.keys(AGENTS).length, 11);
+  });
+
+  test("new agents map to their documented skills folders", () => {
+    assert.equal(agentTarget("agents", "pdf"), ".agents/skills/pdf");
+    assert.equal(agentTarget("copilot", "pdf"), ".github/skills/pdf");
+    assert.equal(agentTarget("gemini", "pdf"), ".gemini/skills/pdf");
+    assert.equal(agentTarget("opencode", "pdf"), ".opencode/skills/pdf");
+    assert.equal(agentTarget("roo", "pdf"), ".roo/skills/pdf");
+    assert.equal(agentTarget("kiro", "pdf"), ".kiro/skills/pdf");
+    assert.deepEqual(parseAgents(["copilot,gemini", "kiro"]), ["copilot", "gemini", "kiro"]);
+  });
+
+  test("targetSkillName accepts new agent targets but nothing else under .github", () => {
+    assert.equal(targetSkillName(".github/skills/pdf"), "pdf");
+    assert.equal(targetSkillName(".agents/skills/pdf"), "pdf");
+    for (const bad of [".github/workflows", ".github/workflows/ci.yml", ".github/skills", ".github/pdf"]) {
+      assert.equal(targetSkillName(bad), undefined, bad);
+    }
   });
 
   test("isValidSkillName", () => {
@@ -85,6 +103,32 @@ describe("filesystem", () => {
     await mkdir(path.join(dir, ".cursor"));
     await mkdir(path.join(dir, ".claude"));
     assert.deepEqual(await detectAgents(dir), ["claude", "cursor"]);
+  });
+
+  test("detectAgents: a bare .github folder does not mean copilot", async () => {
+    await mkdir(path.join(dir, ".github", "workflows"), { recursive: true });
+    assert.deepEqual(await detectAgents(dir), []);
+  });
+
+  test("detectAgents: copilot is detected by .github/skills or copilot-instructions.md", async () => {
+    await mkdir(path.join(dir, ".github"));
+    await writeFile(path.join(dir, ".github", "copilot-instructions.md"), "# hi\n");
+    assert.deepEqual(await detectAgents(dir), ["copilot"]);
+    await rm(path.join(dir, ".github", "copilot-instructions.md"));
+    await mkdir(path.join(dir, ".github", "skills"));
+    assert.deepEqual(await detectAgents(dir), ["copilot"]);
+  });
+
+  test("detectAgents finds the new agent folders", async () => {
+    for (const d of [".agents", ".gemini", ".opencode", ".roo", ".kiro"]) await mkdir(path.join(dir, d));
+    assert.deepEqual(await detectAgents(dir), ["agents", "gemini", "opencode", "roo", "kiro"]);
+  });
+
+  test("assertSafeTarget refuses .github paths outside skills", async () => {
+    assert.equal(await assertSafeTarget(dir, ".github/skills/pdf"), path.join(dir, ".github", "skills", "pdf"));
+    for (const bad of [".github/workflows", ".github", ".github/skills/../workflows"]) {
+      await assert.rejects(assertSafeTarget(dir, bad), CraftError, bad);
+    }
   });
 
   test("resolveAgents: flag wins over manifest defaults", async () => {
