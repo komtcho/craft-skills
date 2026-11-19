@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { CraftError } from "./types.js";
 import { addCommand } from "./commands/add.js";
+import { installCommand } from "./commands/install.js";
 import { listCommand } from "./commands/list.js";
 import * as ui from "./core/ui.js";
 
@@ -53,6 +54,15 @@ export function createProgram(cwd: string): Command {
     .option("--json", "print machine-readable JSON")
     .action(async (opts: { json?: boolean }) => {
       await listCommand(opts, ctx);
+    });
+
+  program
+    .command("install")
+    .alias("i")
+    .description("Install every skill from craft-skills.json at its locked commit")
+    .option("-u, --update", "re-resolve each ref and record the new commit")
+    .action(async (opts: { update?: boolean }) => {
+      await installCommand(opts, ctx);
     });
 
   return program;
