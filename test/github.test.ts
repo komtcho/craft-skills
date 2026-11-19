@@ -49,6 +49,12 @@ describe("parseSource", () => {
     assert.equal(parseSource("https://github.com/o/r/tree/dev/x", "release/1.0").ref, "release/1.0");
   });
 
+  test("slashed branch in a URL: first segment is the ref unless --ref says otherwise", () => {
+    const url = "https://github.com/o/r/tree/feature/x/skills/pdf";
+    assert.deepEqual(parseSource(url), { owner: "o", repo: "r", path: "x/skills/pdf", ref: "feature" });
+    assert.deepEqual(parseSource(url, "feature/x"), { owner: "o", repo: "r", path: "skills/pdf", ref: "feature/x" });
+  });
+
   for (const bad of [
     "",
     "owner",

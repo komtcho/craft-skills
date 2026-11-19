@@ -69,7 +69,14 @@ export function parseSource(input: string, refOverride?: string): ParsedSource {
       const urlRef = segments[3];
       if (urlRef === undefined) throw badSource(input, `missing ref after "/${kind}/"`);
       ref = checkRef(input, urlRef);
-      segments = [segments[0]!, segments[1]!, ...segments.slice(4)];
+      let rest = segments.slice(4);
+      // `--ref feature/x` with `.../tree/feature/x/path`: drop the ref's extra segments from the path.
+      const override = refOverride?.trim();
+      if (override?.startsWith(`${urlRef}/`)) {
+        const extra = override.slice(urlRef.length + 1).split("/");
+        if (extra.every((seg, i) => rest[i] === seg)) rest = rest.slice(extra.length);
+      }
+      segments = [segments[0]!, segments[1]!, ...rest];
     }
   } else {
     let rest = raw.replace(/^github:/i, "");
