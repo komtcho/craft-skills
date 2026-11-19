@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { CraftError } from "./types.js";
 import { addCommand } from "./commands/add.js";
+import { listCommand } from "./commands/list.js";
 import * as ui from "./core/ui.js";
 
 /** Finds this package's version by walking up from the compiled file. */
@@ -43,6 +44,15 @@ export function createProgram(cwd: string): Command {
     .option("-f, --force", "overwrite an installed skill or existing folder")
     .action(async (source: string, opts: { skill?: string; agent: string[]; ref?: string; force?: boolean }) => {
       await addCommand(source, opts, ctx);
+    });
+
+  program
+    .command("list")
+    .alias("ls")
+    .description("List installed skills")
+    .option("--json", "print machine-readable JSON")
+    .action(async (opts: { json?: boolean }) => {
+      await listCommand(opts, ctx);
     });
 
   return program;
