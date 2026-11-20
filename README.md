@@ -1,5 +1,7 @@
 # craft-skills
 
+![craft-skills: one command installs skills for every AI agent](assets/cover.png)
+
 Install AI agent skills from GitHub into your project, for Claude, Cursor, Codex,
 Windsurf, GitHub Copilot, Gemini CLI, OpenCode, Roo Code, Kiro, the shared
 `.agents/` folder or a generic `.agent/` folder. Each skill is locked to an exact commit.
