@@ -6,17 +6,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
-
-### Added
-
-- New agents: `agents` (`.agents/skills`, the folder shared by Codex, Amp, Gemini CLI,
-  Cursor, OpenCode and Copilot), `copilot` (`.github/skills`), `gemini` (`.gemini/skills`),
-  `opencode` (`.opencode/skills`), `roo` (`.roo/skills`) and `kiro` (`.kiro/skills`).
-- Copilot is detected only by `.github/skills/` or `.github/copilot-instructions.md`, not by
-  a bare `.github/` folder.
-
-## [0.1.0] - 2026-11-19
+## [0.1.0] - 2026-11-20
 
 First release.
 
@@ -29,13 +19,15 @@ First release.
 - `remove` (`rm`): delete a skill's folders and its manifest entry.
 - Source formats: `owner/repo[/path][@ref]`, `github:owner/repo[/path][@ref]`, and GitHub
   repository, `tree/` and `blob/` URLs.
-- Agent targets: `.agent`, `.claude`, `.cursor`, `.codex` and `.windsurf` under
-  `skills/<name>/`, resolved from `--agent`, then `defaultAgents`, then detected folders,
-  then `agent`.
+- Agent targets under `skills/<name>/`: `.agent`, `.claude`, `.cursor`, `.codex`,
+  `.windsurf`, `.agents` (the folder shared by Codex, Amp, Gemini CLI, Cursor, OpenCode and
+  Copilot), `.github` (Copilot), `.gemini`, `.opencode`, `.roo` and `.kiro`. Resolved from
+  `--agent`, then `defaultAgents`, then detected folders, then `agent`. Copilot is detected
+  only by `.github/skills/` or `.github/copilot-instructions.md`, not by a bare `.github/`.
 - `craft-skills.json` manifest: validated on read, written atomically with sorted keys.
 - `GITHUB_TOKEN` / `GH_TOKEN` support, with clear messages and hints for 401, 403/429
   (with the reset time), 404, 422 and network errors.
-- Safety: targets are restricted to `.<agent>/skills/<name>` inside the project,
+- Safety: targets are restricted to `<agent folder>/skills/<name>` inside the project,
   agent folders that link outside the project are refused, skill folders are written
   atomically, symlinks and submodules are skipped, and skills are capped at 500 files.
 - `craft` as a short alias for the `craft-skills` command.
